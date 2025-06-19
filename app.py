@@ -1,7 +1,7 @@
 from flask import Flask
 app = Flask(__name__)
 @app.route('/')
-#mahesh
+#mahes
 def hello():
     return 'Hello from Dockerized Flask App! (Group Members: Mahesh And Vinay)'
 if __name__ == '__main__':
