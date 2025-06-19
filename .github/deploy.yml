@@ -28,11 +28,12 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          if [ "$DOCKER_USERNAME" != "" ] && [ "$DOCKER_PASSWORD" != "" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
+          if [ "$EVENT_NAME" != "pull_request" ] && [ -n "$DOCKER_USERNAME" ] && [ -n "$DOCKER_PASSWORD" ]; then
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
           else
-            echo "Skipping Docker login because secrets or event are not valid."
+            echo "Skipping Docker login (pull request or missing secrets)."
           fi
 
       - name: Build and push Docker image
