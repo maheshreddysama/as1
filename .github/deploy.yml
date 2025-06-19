@@ -3,44 +3,43 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main # Trigger on pushes to the 'main' branch
+      - main
   pull_request:
     branches:
-      - main # Optional: Also trigger on pull requests to 'main' for early feedback
+      - main
 
 jobs:
-  build_and_push: # Renamed job for clarity
-    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+  build_and_push:
+    runs-on: ubuntu-latest
 
     permissions:
-      contents: read # Allow checkout action to read repository contents
-      packages: write # If pushing to GitHub Packages
-      id-token: write # If using OIDC for cloud provider authentication later
+      contents: read
+      packages: write
+      id-token: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Use v4 for the latest features and security updates
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3 # Recommended for multi-platform builds and caching
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
-        # Only run this step if DOCKER_USERNAME and DOCKER_PASSWORD secrets are set.
-        if: github.event_name != 'pull_request' && secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != ''
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          if [ "$DOCKER_USERNAME" != "" ] && [ "$DOCKER_PASSWORD" != "" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          else
+            echo "Skipping Docker login because secrets or event are not valid."
+          fi
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: . # Build context is the current directory (where Dockerfile resides)
-          push: ${{ github.event_name != 'pull_request' }} # Only push on 'push' events, not 'pull_request'
-          tags: ${{ secrets.DOCKER_USERNAME }}/as1:latest # Tag the image with latest
-          cache-from: type=gha,scope=${{ github.workflow }} # Use GitHub Actions cache for faster builds
-          cache-to: type=gha,scope=${{ github.workflow }},mode=max # Cache layers for future builds
-
-      # Optional: Add a step to notify or deploy after successful build and push
-      # - name: Deploy to wherever
-      #   run: echo "Deployment step would go here"
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/as1:latest
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,scope=${{ github.workflow }},mode=max
