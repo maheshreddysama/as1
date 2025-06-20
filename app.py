@@ -3,6 +3,6 @@ app = Flask(__name__)
 @app.route('/')
 #mahesh
 def hello():
-    return 'Hello from Dockerized Flask App! (Group Members: Mahesh And Vinay)'
+    return 'Hello from Dockerized Flask App!'
 if __name__ == '__main__':
              app.run(host='0.0.0.0', port=5000)
